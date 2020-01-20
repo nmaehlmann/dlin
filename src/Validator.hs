@@ -2,6 +2,8 @@ module Validator where
 
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Data.Map (Map)
+import qualified Data.Map as Map
 
 import AST
 import Parser.Equation
@@ -22,3 +24,6 @@ usedFunctions eqs = Set.fromList $ concatMap usedFunctions' eqs
             [lhs, rhs] <*> [operation]
         usedFunctions' (RecEq _ recursion) = 
             [outerFunction, innerFunction] <*> [recursion]
+
+-- validate :: [Equation] -> Either String (Map Idt Equation)
+-- validate (OpEq idt op
