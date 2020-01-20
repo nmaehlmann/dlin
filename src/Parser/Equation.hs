@@ -23,6 +23,26 @@ operation = do
             , lhs = lhsName
             , rhs = rhsName
             }     
+recursion :: Parser Equation
+recursion = do
+    (funName, argName) <- functionCall
+    reservedOp "="
+    outerFunName <- identifier
+    (innerFunName, innerArgName) <- brackets $ do
+        reserved "ep"
+        parens $ do
+            innerFunName <- identifier
+            comma
+            innerArgName <- identifier
+            return (innerFunName, innerArgName)
+    boundedArgName <- identifier
+    if innerArgName /= argName || boundedArgName /= argName
+        then fail "function argument names do not match"
+        else return $ RecEq funName $ Recursion
+            { outerFunction = outerFunName
+            , innerFunction = innerFunName
+            }
+
 
 functionCall :: Parser (Idt, Idt)
 functionCall = do
