@@ -1,7 +1,7 @@
 module AST where
 
 data Idt = Idt String
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Show)
 
 data Equation 
     = OpEq Idt Operation

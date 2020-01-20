@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ffb154c6ef0fa485697f2970eca45e7eee712deb8bc8491fc3030411479aeba1
+-- hash: 8632de6eee35821df4df25d5db05a5aa2213fe384d05411ee5d5e7ecbf20e969
 
 name:           dlin
 version:        0.1.0.0
@@ -29,12 +29,14 @@ library
       Lib
       Parser.Equation
       Parser.Lexer
+      Validator
   other-modules:
       Paths_dlin
   hs-source-dirs:
       src
   build-depends:
       base >=4.7 && <5
+    , containers
     , parsec
   default-language: Haskell2010
 
@@ -61,6 +63,7 @@ test-suite dlin-test
   build-depends:
       QuickCheck
     , base >=4.7 && <5
+    , containers
     , dlin
     , hspec
     , parsec

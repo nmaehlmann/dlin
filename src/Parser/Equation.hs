@@ -1,10 +1,16 @@
-module Parser.Equation where
+module Parser.Equation (equations) where
 
 import Text.Parsec.String (Parser)
 import Text.Parsec
 
 import AST
 import Parser.Lexer
+
+equations :: Parser [Equation]
+equations = many1 equation
+
+equation :: Parser Equation
+equation = try operation <|> recursion
 
 identifier :: Parser Idt
 identifier = Idt <$> lIdentifier

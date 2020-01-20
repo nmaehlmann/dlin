@@ -25,6 +25,7 @@ library:
   source-dirs: src
   dependencies:
     - parsec
+    - containers
 
 executables:
   dlin:
@@ -50,3 +51,4 @@ tests:
     - hspec
     - QuickCheck
     - parsec
+    - containers
