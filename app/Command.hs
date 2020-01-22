@@ -1,0 +1,36 @@
+module Command (Command(..), command) where
+
+import Text.Parsec.String (Parser)
+import Text.Parsec
+import Text.Parsec.Char
+
+import AST
+import Parser.Lexer
+import Parser.Equation
+
+data Command 
+    = Load String
+    | Define Idt [Int]
+    | Evaluate Idt Int
+
+command :: Parser Command
+command = try load <|> try define <|> try evaluate
+
+load :: Parser Command
+load = fmap Load $ symbol ":l" >> (many1 anyChar)
+
+int :: Parser Int
+int = fmap fromIntegral natural
+
+define :: Parser Command
+define = do
+    funName <- identifier
+    reservedOp "="
+    funValues <- brackets $ int `sepBy` comma
+    return $ Define funName funValues
+
+evaluate :: Parser Command
+evaluate = do
+    funName <- identifier
+    funArg <- parens int
+    return $ Evaluate funName funArg

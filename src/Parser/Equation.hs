@@ -1,4 +1,4 @@
-module Parser.Equation (equations) where
+module Parser.Equation (equations, identifier) where
 
 import Text.Parsec.String (Parser)
 import Text.Parsec
@@ -28,7 +28,8 @@ operation = do
             { operator = op
             , lhs = lhsName
             , rhs = rhsName
-            }     
+            }
+
 recursion :: Parser Equation
 recursion = do
     (funName, argName) <- functionCall
@@ -48,7 +49,6 @@ recursion = do
             { outerFunction = outerFunName
             , innerFunction = innerFunName
             }
-
 
 functionCall :: Parser (Idt, Idt)
 functionCall = do

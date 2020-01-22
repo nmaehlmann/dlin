@@ -38,6 +38,10 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - dlin
+    - haskeline
+    - containers
+    - parsec
+    - transformers
 
 tests:
   dlin-test:

@@ -72,3 +72,12 @@ commaSep = Tok.commaSep lexer
 
 semi ::  Parser String
 semi = Tok.semi lexer
+
+symbol :: String -> Parser String
+symbol = Tok.symbol lexer
+
+stringLiteral :: Parser String
+stringLiteral = Tok.stringLiteral lexer
+
+natural :: Parser Integer
+natural = Tok.natural lexer
