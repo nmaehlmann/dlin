@@ -1,7 +1,10 @@
 module AST where
 
 data Idt = Idt String
-    deriving (Eq, Ord, Show)
+    deriving (Eq, Ord)
+
+instance Show Idt where
+    show (Idt s) = s
 
 data Equation 
     = OpEq Idt Operation

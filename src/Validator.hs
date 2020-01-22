@@ -25,5 +25,16 @@ usedFunctions eqs = Set.fromList $ concatMap usedFunctions' eqs
         usedFunctions' (RecEq _ recursion) = 
             [outerFunction, innerFunction] <*> [recursion]
 
--- validate :: [Equation] -> Either String (Map Idt Equation)
--- validate (OpEq idt op
+validate :: [Equation] -> Either String (Map Idt Equation)
+validate [] = Right Map.empty
+validate (eq:eqs) = do
+    higherIndexedEqs <- validate eqs
+    let dependencies = lowerIdxDependencies eq
+    let identifier = idt eq
+    if any (\i -> Map.member i higherIndexedEqs) dependencies
+        then Left $ "invalid dependency in " ++ show identifier
+        else Right $ Map.insert identifier eq higherIndexedEqs
+
+lowerIdxDependencies :: Equation -> [Idt]
+lowerIdxDependencies (OpEq _ (Operation _ lhs rhs)) = [lhs, rhs]
+lowerIdxDependencies (RecEq _ (Recursion _ innerIdt)) = [innerIdt]
