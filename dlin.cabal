@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8632de6eee35821df4df25d5db05a5aa2213fe384d05411ee5d5e7ecbf20e969
+-- hash: c068187bede895f64c4d007f246b429e4c3eb7b6dbc12e121fb1437b3e05eba2
 
 name:           dlin
 version:        0.1.0.0
@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       AST
+      Interpreter
       Lib
       Parser.Equation
       Parser.Lexer
@@ -37,6 +38,7 @@ library
   build-depends:
       base >=4.7 && <5
     , containers
+    , mtl
     , parsec
   default-language: Haskell2010
 

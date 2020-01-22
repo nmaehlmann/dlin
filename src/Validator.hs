@@ -9,7 +9,7 @@ import AST
 import Parser.Equation
 
 predefinedFunctions :: Set Idt
-predefinedFunctions = Set.fromList [Idt "1", Idt "id", Idt "n"]
+predefinedFunctions = Set.fromList [const1, constN, constId]
 
 unknownFunctions :: [Equation] -> Set Idt
 unknownFunctions eqs = Set.difference (usedFunctions eqs) $ Set.union predefinedFunctions $ definedFunctions eqs

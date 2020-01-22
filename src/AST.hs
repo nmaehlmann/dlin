@@ -1,5 +1,10 @@
 module AST where
 
+constN, const1, constId :: Idt
+constN = Idt "n"
+const1 = Idt "1"
+constId = Idt "id"
+
 data Idt = Idt String
     deriving (Eq, Ord)
 
