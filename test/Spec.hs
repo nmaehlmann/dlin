@@ -10,7 +10,7 @@ import Interpreter
 
 main :: IO ()
 main = do
-    maxSrc <- readFile "example/maximum.dlin"
+    maxSrc <- readFile "examples/maximum.dlin"
     let f = Idt "f"
     let f1 = Idt "f1"
     let f2 = Idt "f2"
