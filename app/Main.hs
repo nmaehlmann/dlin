@@ -18,19 +18,19 @@ main :: IO ()
 main = runInputT defaultSettings $ loop initState
 
 loop :: State -> InputT IO ()
-loop s = do
-    minput <- getInputLine $ currentFile s ++ "> "
+loop state = do
+    minput <- getInputLine $ currentFile state ++ "> "   
     case minput of
         Nothing -> return ()
         Just ":q" -> return ()
-        Just input -> handleInput s input >>= loop
+        Just input -> handleInput state input >>= loop
 
 handleInput :: State -> String -> InputT IO State
-handleInput s input = do
+handleInput state input = do
     let parsedCommand = parse command "" input
     case parsedCommand of 
-        (Left err) -> outputStrLn ("unknown command: " ++ show err) >> return s
-        (Right cmd) -> handleCommand s cmd
+        (Left err) -> outputStrLn ("unknown command: " ++ show err) >> return state
+        (Right cmd) -> handleCommand state cmd
 
 handleCommand :: State -> Command -> InputT IO State
 handleCommand state (Load file) = do

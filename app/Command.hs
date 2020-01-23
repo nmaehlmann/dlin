@@ -7,6 +7,8 @@ import Text.Parsec.Char
 import AST
 import Parser.Lexer
 import Parser.Equation
+import Data.Char (isSpace)
+import Data.List (dropWhileEnd)
 
 data Command 
     = Load String
@@ -17,7 +19,7 @@ command :: Parser Command
 command = try load <|> try define <|> try evaluate
 
 load :: Parser Command
-load = fmap Load $ symbol ":l" >> (many1 anyChar)
+load = fmap (Load . trimRight) $ symbol ":l" >> (many1 anyChar)
 
 int :: Parser Int
 int = fmap fromIntegral natural
@@ -34,3 +36,6 @@ evaluate = do
     funName <- identifier
     funArg <- parens int
     return $ Evaluate funName funArg
+
+trimRight :: String -> String
+trimRight = dropWhileEnd isSpace
