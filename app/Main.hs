@@ -44,7 +44,9 @@ handleCommand state (Load file) = do
 handleCommand state (Define funName funVals) = 
     return $ state {currentDefinitions = Map.insert funName funVals (currentDefinitions state)}
 handleCommand state (Evaluate funName funArg) = do
-    outputStrLn $ show $ interpret (currentProgram state) (currentDefinitions state) funName funArg
+    case interpret (currentProgram state) (currentDefinitions state) funName funArg of
+        (Left err) -> outputStrLn err
+        (Right result) -> outputStrLn $ show $ result
     return state
 
 data State = State

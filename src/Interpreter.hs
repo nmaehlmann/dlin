@@ -13,10 +13,10 @@ data Fun
     | ConstOne
     | Identity
 
-type Interpreter = Reader (Map Idt Fun) Int
+type Interpreter = ReaderT (Map Idt Fun) (Either String) Int
 
-interpret :: Map Idt Equation -> Map Idt [Int] -> Idt -> Int -> Int
-interpret definitions predefineds f x = runReader (evaluate f x) dict
+interpret :: Map Idt Equation -> Map Idt [Int] -> Idt -> Int -> Either String Int
+interpret definitions predefineds f x = runReaderT (evaluate f x) dict
     where dict = buildDictionary definitions predefineds
 
 buildDictionary :: Map Idt Equation -> Map Idt [Int] -> Map Idt Fun
@@ -42,9 +42,9 @@ evaluate :: Idt -> Int -> Interpreter
 evaluate fIdt x = if inBounds x
     then do
         dictionary <- ask
-        let f = case Map.lookup fIdt dictionary of
-                (Just f) -> f
-                Nothing -> error $ "Error: could not find " ++ show fIdt
+        f <- case Map.lookup fIdt dictionary of
+                (Just f) -> return f
+                Nothing -> lift $ Left $ "Error: undefined function symbol " ++ show fIdt
         result <- evaluateUnsafe f x
         if inBounds result 
             then return result
