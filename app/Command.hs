@@ -1,5 +1,7 @@
 module Command (Command(..), command) where
 
+import Data.Char (isSpace)
+import Data.List (dropWhileEnd)
 import Text.Parsec.String (Parser)
 import Text.Parsec
 import Text.Parsec.Char
@@ -7,8 +9,6 @@ import Text.Parsec.Char
 import AST
 import Parser.Lexer
 import Parser.Equation
-import Data.Char (isSpace)
-import Data.List (dropWhileEnd)
 
 data Command 
     = Load String

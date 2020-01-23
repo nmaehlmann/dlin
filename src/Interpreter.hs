@@ -32,7 +32,7 @@ eqToFun (OpEq _ (Operation op lhs rhs)) = OpFun op lhs rhs
 eqToFun (RecEq _ (Recursion outer inner)) = RecFun outer inner
 
 predefinedToFun :: [Int] -> Fun
-predefinedToFun rs = Predefined $ rs ++ [0..]
+predefinedToFun rs = Predefined $ rs ++ repeat 0
 
 inBounds :: Int -> Bool
 inBounds x = 0 <= x && x < upperBound - 1
