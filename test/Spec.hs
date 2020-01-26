@@ -11,25 +11,25 @@ import Interpreter
 main :: IO ()
 main = do
     maxSrc <- readFile "examples/maximum.dlin"
-    let f = Idt "f"
-    let f1 = Idt "f1"
-    let f2 = Idt "f2"
-    let f3 = Idt "f3"
+    let input = Idt "input"
+    let pmax = Idt "pmax"
+    let i = Idt "i"
+    let max = Idt "max"
     let one = Idt "1"
-    let eqF1 = RecEq f1 (Recursion f3 one)
-    let eqF2 = OpEq f2 (Operation Sub f f1)
-    let eqF3 = OpEq f3 (Operation Add f1 f2)  
+    let eqPMax = RecEq pmax (Recursion max one)
+    let eqI = OpEq i (Operation Sub input pmax)
+    let eqMax = OpEq max (Operation Add pmax i)
 
     let maxProgram =
-            [ eqF1
-            , eqF2
-            , eqF3
+            [ eqPMax
+            , eqI
+            , eqMax
             ]
 
     let validatedProgram = Map.fromList 
-            [ (f1, eqF1)
-            , (f2, eqF2)
-            , (f3, eqF3)
+            [ (pmax, eqPMax)
+            , (i, eqI)
+            , (max, eqMax)
             ]
 
     hspec $ do
@@ -41,34 +41,34 @@ main = do
 
         describe "Validator" $ do
             let malformedMaxProgram =
-                    [ eqF1
-                    , eqF3
-                    , eqF2
+                    [ eqPMax
+                    , eqMax
+                    , eqI
                     ]
 
             it "collects the defined function symbols" $ do
-                definedFunctions maxProgram `shouldBe` (Set.fromList [f1,f2,f3])
+                definedFunctions maxProgram `shouldBe` (Set.fromList [pmax,i,max])
             it "collects the used function symbols" $ do
-                usedFunctions maxProgram `shouldBe` (Set.fromList [f,f1,f2,f3,one])
+                usedFunctions maxProgram `shouldBe` (Set.fromList [input,pmax,i,max,one])
             it "collects unknown function symbols" $ do
-                unknownFunctions maxProgram `shouldBe` (Set.fromList [f])
+                unknownFunctions maxProgram `shouldBe` (Set.fromList [input])
             it "validates a maximum program successfully" $ do
                 validate maxProgram `shouldBe` (Right validatedProgram)
             it "fails to validate a malformed maximum program" $ do
-                validate malformedMaxProgram `shouldBe` (Left "invalid dependency in f3")
+                validate malformedMaxProgram `shouldBe` (Left "invalid dependency in max")
 
         describe "Interpreter" $ do
-            let makeF vals = Map.fromList [(f, vals)]
+            let makeInput vals = Map.fromList [(input, vals)]
 
             it "interprets the one function" $ do
-                let twoOnes = Map.fromList [(f, OpEq f (Operation Add const1 const1))]
-                interpret twoOnes Map.empty f 1 `shouldBe` 2
+                let twoOnes = Map.fromList [(input, OpEq input (Operation Add const1 const1))]
+                interpret twoOnes Map.empty input 5 `shouldBe` (Right 2)
 
             it "interprets the id function" $ do
-                let twoIds = Map.fromList [(f, OpEq f (Operation Add constId constId))]
-                interpret twoIds Map.empty f 5 `shouldBe` 10
+                let twoIds = Map.fromList [(input, OpEq input (Operation Add constId constId))]
+                interpret twoIds Map.empty input 5 `shouldBe` (Right 10)
 
             it "interprets the maximum program" $ do
-                interpret validatedProgram (makeF [7,2,55,13,54,11]) f3 5 `shouldBe` 55
-                interpret validatedProgram (makeF [7,2,55,13,54,99]) f3 5 `shouldBe` 99
-                interpret validatedProgram (makeF [107,2,55,13,54,99]) f3 5 `shouldBe` 107
+                interpret validatedProgram (makeInput [7,2,55,13,54,11]) max 5 `shouldBe` (Right 55)
+                interpret validatedProgram (makeInput [7,2,55,13,54,99]) max 5 `shouldBe` (Right 99)
+                interpret validatedProgram (makeInput [107,2,55,13,54,99]) max 5 `shouldBe` (Right 107)
