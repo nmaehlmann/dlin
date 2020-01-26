@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c7d56b98a4b6a7619093250fa17365412b97538172ce3f44ffed3900156639fe
+-- hash: ac1edb8c07df1acf7239745845440b4ae8339f0a8e7e37ca750e42585fbed03b
 
 name:           dlin
 version:        0.1.0.0
@@ -40,6 +40,7 @@ library
     , containers
     , mtl
     , parsec
+    , transformers
   default-language: Haskell2010
 
 executable dlin

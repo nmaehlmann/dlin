@@ -58,17 +58,32 @@ main = do
                 validate malformedMaxProgram `shouldBe` (Left "invalid dependency in max")
 
         describe "Interpreter" $ do
-            let makeInput vals = Map.fromList [(input, vals)]
+            let mkInput = makeInput input
+            let mB = 100
+            let output = Idt "output"
 
             it "interprets the one function" $ do
-                let twoOnes = Map.fromList [(input, OpEq input (Operation Add const1 const1))]
-                interpret twoOnes Map.empty input 5 `shouldBe` (Right 2)
+                let twoOnes = Map.fromList [(output, OpEq output (Operation Add const1 const1))]
+                interpret twoOnes (mkInput [5]) mB output 5 `shouldBe` (Right 2)
 
             it "interprets the id function" $ do
-                let twoIds = Map.fromList [(input, OpEq input (Operation Add constId constId))]
-                interpret twoIds Map.empty input 5 `shouldBe` (Right 10)
+                let twoIds = Map.fromList [(output, OpEq output (Operation Add constId constId))]
+                interpret twoIds (mkInput [5]) mB output 5 `shouldBe` (Right 10)
 
             it "interprets the maximum program" $ do
-                interpret validatedProgram (makeInput [7,2,55,13,54,11]) max 5 `shouldBe` (Right 55)
-                interpret validatedProgram (makeInput [7,2,55,13,54,99]) max 5 `shouldBe` (Right 99)
-                interpret validatedProgram (makeInput [107,2,55,13,54,99]) max 5 `shouldBe` (Right 107)
+                interpret validatedProgram (mkInput [7,2,55,13,54,11]) mB max 5 `shouldBe` (Right 55)
+                interpret validatedProgram (mkInput [7,2,55,13,54,99]) mB max 5 `shouldBe` (Right 99)
+                interpret validatedProgram (mkInput [107,2,55,13,54,99]) mB max 5 `shouldBe` (Right 107)
+
+            it "handles overflows" $ do
+                interpret validatedProgram (mkInput [7,2,55,13,54,9999]) mB max 5 `shouldBe` (Right 55)
+                interpret validatedProgram (mkInput [7,2,55,13,54,99]) mB max 9999 `shouldBe` (Right 0)
+
+            it "handles underflows" $ do
+                interpret validatedProgram (mkInput [7,2,55,13,54,-9999]) mB max 5 `shouldBe` (Right 55)
+                interpret validatedProgram (mkInput [7,2,55,13,54,99]) mB max (-9999) `shouldBe` (Right 0)                
+
+
+makeInput :: Idt -> [Int] -> Map Idt [Int]
+makeInput funName vals = Map.insert constN (repeat n) $ Map.fromList [(funName, vals)]
+    where n = length vals

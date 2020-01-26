@@ -56,7 +56,7 @@ handleCommand state (Define funName funVals) =
     return $ state {currentDefinitions = Map.insert funName funVals (currentDefinitions state)}
 
 handleCommand state (Evaluate funName funArg) = do
-    case interpret (currentProgram state) (currentDefinitions state) funName funArg of
+    case interpret (currentProgram state) (currentDefinitions state) 100 funName funArg of
         (Left err) -> outputStrLn err
         (Right result) -> outputStrLn $ show $ result
     return state

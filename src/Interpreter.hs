@@ -1,23 +1,91 @@
 module Interpreter where
 
-import Control.Monad.Reader
+import Control.Monad
+import Control.Monad.Trans.Class
+import Control.Monad.Trans.State.Lazy (StateT)
+import qualified Control.Monad.Trans.State.Lazy as StateT
 import Data.Map (Map)
 import qualified Data.Map as Map
 
 import AST
 
-data Fun 
+data IxIdt = IxIdt Int
+    deriving (Eq, Ord)
+
+data IxFun 
+    = IxOpFun Operator IxIdt IxIdt
+    | IxRecFun IxIdt IxIdt
+    | IxPredefined [Int]
+    | IxConstOne
+    | IxIdentity
+
+data Fun
     = OpFun Operator Idt Idt
     | RecFun Idt Idt
     | Predefined [Int]
     | ConstOne
     | Identity
 
-type Interpreter = ReaderT (Map Idt Fun) (Either String) Int
+indexIdentifiers :: [Idt] -> Map Idt IxIdt
+indexIdentifiers idts = Map.fromList $ zip idts $ map IxIdt [0..]
 
-interpret :: Map Idt Equation -> Map Idt [Int] -> Idt -> Int -> Either String Int
-interpret definitions predefineds f x = runReaderT (evaluate f x) dict
-    where dict = buildDictionary definitions predefineds
+lookupIdt :: Map Idt IxIdt -> Idt -> Either String IxIdt
+lookupIdt dict idt = case Map.lookup idt dict of
+    (Just ixIdt) -> Right ixIdt
+    Nothing -> Left $ "Error: unknown symbol " ++ show idt
+
+indexFunction :: Map Idt IxIdt -> Fun -> Either String IxFun
+indexFunction dict fun = let getIx = lookupIdt dict 
+    in case fun of
+            (OpFun op idt1 idt2) -> do
+                ixIdt1 <- getIx idt1
+                ixIdt2 <- getIx idt2
+                return $ IxOpFun op ixIdt1 ixIdt2
+            (RecFun idt1 idt2) -> do
+                ixIdt1 <- getIx idt1
+                ixIdt2 <- getIx idt2
+                return $ IxRecFun ixIdt1 ixIdt2
+            (Predefined vals) -> return $ IxPredefined vals
+            ConstOne -> return IxConstOne
+            Identity -> return IxIdentity
+
+indexDictionary :: Map Idt Fun -> Either String (Map Idt IxIdt, Map IxIdt IxFun)
+indexDictionary dict = do
+    let idtIndex = indexIdentifiers $ Map.keys dict
+    let indexedIdts = Map.elems idtIndex
+    indexedFuns <- sequence $ map (indexFunction idtIndex) $ Map.elems dict
+    let funIndex = Map.fromList $ zip indexedIdts indexedFuns
+    return $ (idtIndex, funIndex)
+
+type InterpreterVal a = StateT InterpreterState (Either String) a
+type Interpreter = InterpreterVal Int
+
+data InterpreterState = InterpreterState 
+    { upperBound :: Int
+    , functionDictionary :: Map Idt Fun
+    , cache :: Map (Idt, Int) Int
+    }
+
+interpret' :: Map Idt Equation -> Map Idt [Int] -> Int -> Idt -> Int -> Either String Int
+interpret' definitions predefineds magnificationBound f x = do
+    n <- lookupN predefineds
+    let uB = n * magnificationBound
+    (idtIndex, functionIndex) <- indexDictionary $ buildDictionary definitions predefineds 
+    return 1
+
+lookupN :: Map Idt [Int] -> Either String Int 
+lookupN predefineds = case Map.lookup constN predefineds of
+    (Just (n : _)) -> return n
+    otherwise -> Left $ "Error: undefined function symbol " ++ show constN
+
+interpret :: Map Idt Equation -> Map Idt [Int] -> Int -> Idt -> Int -> Either String Int
+interpret definitions predefineds magnificationBound f x = case Map.lookup constN predefineds of
+    (Just (n : _)) -> let 
+            dict = buildDictionary definitions predefineds
+            uB = n * magnificationBound
+            initialState = InterpreterState uB dict Map.empty
+        in StateT.evalStateT (evaluate f x) initialState
+    otherwise -> Left $ "Error: undefined function symbol " ++ show constN
 
 buildDictionary :: Map Idt Equation -> Map Idt [Int] -> Map Idt Fun
 buildDictionary definitions predefineds = addConstOne $ addIdentity $ Map.union mappedDefinitions mappedPredefineds
@@ -34,22 +102,26 @@ eqToFun (RecEq _ (Recursion outer inner)) = RecFun outer inner
 predefinedToFun :: [Int] -> Fun
 predefinedToFun rs = Predefined $ rs ++ repeat 0
 
-inBounds :: Int -> Bool
-inBounds x = 0 <= x && x < upperBound - 1
-    where upperBound = 1000
+inBounds :: Int -> InterpreterVal Bool
+inBounds x = do 
+    uB <- upperBound <$> StateT.get
+    return $ 0 <= x && x < uB - 1
 
 evaluate :: Idt -> Int -> Interpreter
-evaluate fIdt x = if inBounds x
-    then do
-        dictionary <- ask
-        f <- case Map.lookup fIdt dictionary of
-                (Just f) -> return f
-                Nothing -> lift $ Left $ "Error: undefined function symbol " ++ show fIdt
-        result <- evaluateUnsafe f x
-        if inBounds result 
-            then return result
-            else return 0
-    else return 0
+evaluate fIdt x = do
+    validInput <- inBounds x
+    if validInput
+        then do
+            dictionary <- functionDictionary <$> StateT.get
+            f <- case Map.lookup fIdt dictionary of
+                    (Just f) -> return f
+                    Nothing -> lift $ Left $ "Error: undefined function symbol " ++ show fIdt
+            result <- evaluateUnsafe f x
+            validOutput <- inBounds result
+            if validOutput 
+                then return result
+                else return 0
+        else return 0
 
 evaluateUnsafe :: Fun -> Int -> Interpreter
 evaluateUnsafe ConstOne _ = return 1

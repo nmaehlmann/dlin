@@ -27,6 +27,7 @@ library:
     - parsec
     - containers
     - mtl
+    - transformers
 
 executables:
   dlin:
