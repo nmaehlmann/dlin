@@ -28,6 +28,7 @@ library:
     - containers
     - mtl
     - transformers
+    - array
 
 executables:
   dlin:

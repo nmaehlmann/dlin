@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ac1edb8c07df1acf7239745845440b4ae8339f0a8e7e37ca750e42585fbed03b
+-- hash: eeef3f5f2dff4f6aebcb343d9317cc2f7b544bd236a7b09d14f9b6eabc865ba1
 
 name:           dlin
 version:        0.1.0.0
@@ -36,7 +36,8 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5
+      array
+    , base >=4.7 && <5
     , containers
     , mtl
     , parsec
