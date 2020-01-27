@@ -21,6 +21,7 @@ data State = State
     { currentFile :: String
     , currentProgram :: Map Idt Equation
     , currentDefinitions :: Map Idt [Int]
+    , currentUpperBound :: Int
     }
 
 main :: IO ()
@@ -28,7 +29,8 @@ main = runInputT defaultSettings $ loop initState
 
 loop :: State -> Repl ()
 loop state = do
-    minput <- getInputLine $ currentFile state ++ "> "   
+    let replText = "|" ++ show (currentUpperBound state) ++ "| " ++ currentFile state ++ "> "  
+    minput <- getInputLine replText 
     case minput of
         Nothing -> return ()
         Just ":q" -> return ()
@@ -56,14 +58,19 @@ handleCommand state (Define funName funVals) =
     return $ state {currentDefinitions = Map.insert funName funVals (currentDefinitions state)}
 
 handleCommand state (Evaluate funName funArg) = do
-    case interpret (currentProgram state) (currentDefinitions state) 100 funName funArg of
+    case interpret (currentProgram state) (currentDefinitions state) (currentUpperBound state) funName funArg of
         (Left err) -> outputStrLn err
         (Right result) -> outputStrLn $ show $ result
     return state
+
+handleCommand state (SetUpperBound b) = 
+    return $ state {currentUpperBound = b}
+
 
 initState :: State
 initState = State
     { currentFile = ""
     , currentProgram = Map.empty
     , currentDefinitions = Map.empty
+    , currentUpperBound = 100
     }

@@ -73,7 +73,7 @@ main = do
             it "interprets the maximum program" $ do
                 interpret validatedProgram (mkInput [7,2,55,13,54,11]) mB max 5 `shouldBe` (Right 55)
                 interpret validatedProgram (mkInput [7,2,55,13,54,99]) mB max 5 `shouldBe` (Right 99)
-                interpret validatedProgram (mkInput [107,2,55,13,54,99]) mB max 5 `shouldBe` (Right 107)
+                interpret validatedProgram (mkInput [107,2,55,13,54,99]) 108 max 5 `shouldBe` (Right 107)
 
             it "handles overflows" $ do
                 interpret validatedProgram (mkInput [7,2,55,13,54,9999]) mB max 5 `shouldBe` (Right 55)

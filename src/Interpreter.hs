@@ -36,7 +36,7 @@ type InterpreterVal a = StateT InterpreterState (Either String) a
 type Interpreter = InterpreterVal Int
 
 data InterpreterState = InterpreterState 
-    { upperBound :: Int
+    { upperValueBound :: Int
     , functionDictionary :: Map IxIdt IxFun
     , cache :: Array (IxIdt, Int) (Maybe Int)
     }
@@ -85,9 +85,7 @@ cacheWrite fIdt x y = do
     StateT.modify updState
 
 interpret :: Map Idt Equation -> Map Idt [Int] -> Int -> Idt -> Int -> Either String Int
-interpret definitions predefineds magnificationBound f x = do
-    n <- lookupN predefineds
-    let uB = n * magnificationBound
+interpret definitions predefineds uB f x = do
     let dict = buildDictionary definitions predefineds
     (idtIndex, functionIndex) <- indexDictionary uB dict 
     let maxIdtIdx = length $ Map.keys idtIndex
@@ -95,13 +93,8 @@ interpret definitions predefineds magnificationBound f x = do
     let upperArrayBound = (IxIdt (maxIdtIdx - 1), uB - 1)
     let emptyCache = Array.listArray (lowerArrayBound, upperArrayBound) $ replicate (maxIdtIdx * uB) Nothing
     let initialState = InterpreterState uB functionIndex emptyCache
-    let ixF = idtIndex Map.! f
+    ixF <- lookupIdt idtIndex f
     StateT.evalStateT (evaluate ixF x) initialState
-
-lookupN :: Map Idt [Int] -> Either String Int 
-lookupN predefineds = case Map.lookup constN predefineds of
-    (Just (n : _)) -> return n
-    otherwise -> Left $ "Error: undefined function symbol " ++ show constN
 
 buildDictionary :: Map Idt Equation -> Map Idt [Int] -> Map Idt Fun
 buildDictionary definitions predefineds = addConstOne $ addIdentity $ Map.union mappedDefinitions mappedPredefineds
@@ -120,8 +113,8 @@ predefinedToFun rs = Predefined $ rs ++ repeat 0
 
 inBounds :: Int -> InterpreterVal Bool
 inBounds x = do 
-    uB <- upperBound <$> StateT.get
-    return $ 0 <= x && x < uB - 1
+    uB <- upperValueBound <$> StateT.get
+    return $ 0 <= x && x < uB
 
 evaluate :: IxIdt -> Int -> Interpreter
 evaluate fIdt x = do

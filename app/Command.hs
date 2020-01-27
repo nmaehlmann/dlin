@@ -14,12 +14,16 @@ data Command
     = Load String
     | Define Idt [Int]
     | Evaluate Idt Int
+    | SetUpperBound Int
 
 command :: Parser Command
-command = try load <|> try define <|> try evaluate
+command = try load <|> try define <|> try evaluate <|> try setUpperBound
 
 load :: Parser Command
 load = fmap (Load . trimRight) $ symbol ":l" >> (many1 anyChar)
+
+setUpperBound :: Parser Command
+setUpperBound = fmap SetUpperBound $ symbol ":b" >> int
 
 int :: Parser Int
 int = fmap fromIntegral natural

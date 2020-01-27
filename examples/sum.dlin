@@ -1,2 +1,2 @@
-f1(x) = f2[ep(1,x)]x
-f2(x) = f(x) + f1(x)
+psum(x) = sum[ep(1,x)]x
+sum(x) = input(x) + psum(x)
