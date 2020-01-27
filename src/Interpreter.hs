@@ -18,9 +18,10 @@ newtype IxIdt = IxIdt Int
 data IxFun 
     = IxOpFun Operator IxIdt IxIdt
     | IxRecFun IxIdt IxIdt
-    | IxPredefined [Int]
+    | IxPredefined (Array Int Int)
     | IxConstOne
     | IxIdentity
+    deriving Show
 
 data Fun
     = OpFun Operator Idt Idt
@@ -28,17 +29,29 @@ data Fun
     | Predefined [Int]
     | ConstOne
     | Identity
+    deriving Show
+
+type InterpreterVal a = StateT InterpreterState (Either String) a
+
+type Interpreter = InterpreterVal Int
+
+data InterpreterState = InterpreterState 
+    { upperBound :: Int
+    , functionDictionary :: Map IxIdt IxFun
+    , cache :: Array (IxIdt, Int) (Maybe Int)
+    }
+    deriving Show
 
 indexIdentifiers :: [Idt] -> Map Idt IxIdt
-indexIdentifiers idts = Map.fromList $ zip idts $ map IxIdt [0..]
+indexIdentifiers idts = Map.fromList $ zip idts $ map IxIdt [0..100]
 
 lookupIdt :: Map Idt IxIdt -> Idt -> Either String IxIdt
 lookupIdt dict idt = case Map.lookup idt dict of
     (Just ixIdt) -> Right ixIdt
     Nothing -> Left $ "Error: unknown symbol " ++ show idt
 
-indexFunction :: Map Idt IxIdt -> Fun -> Either String IxFun
-indexFunction dict fun = let getIx = lookupIdt dict 
+indexFunction :: Int -> Map Idt IxIdt -> Fun -> Either String IxFun
+indexFunction uB dict fun = let getIx = lookupIdt dict 
     in case fun of
             (OpFun op idt1 idt2) -> do
                 ixIdt1 <- getIx idt1
@@ -48,26 +61,17 @@ indexFunction dict fun = let getIx = lookupIdt dict
                 ixIdt1 <- getIx idt1
                 ixIdt2 <- getIx idt2
                 return $ IxRecFun ixIdt1 ixIdt2
-            (Predefined vals) -> return $ IxPredefined vals
+            (Predefined vals) -> return $ IxPredefined $ Array.listArray (0, uB - 1) vals
             ConstOne -> return IxConstOne
             Identity -> return IxIdentity
 
-indexDictionary :: Map Idt Fun -> Either String (Map Idt IxIdt, Map IxIdt IxFun)
-indexDictionary dict = do
+indexDictionary :: Int -> Map Idt Fun -> Either String (Map Idt IxIdt, Map IxIdt IxFun)
+indexDictionary uB dict = do
     let idtIndex = indexIdentifiers $ Map.keys dict
     let indexedIdts = Map.elems idtIndex
-    indexedFuns <- sequence $ map (indexFunction idtIndex) $ Map.elems dict
+    indexedFuns <- sequence $ map (indexFunction uB idtIndex) $ Map.elems dict
     let funIndex = Map.fromList $ zip indexedIdts indexedFuns
     return $ (idtIndex, funIndex)
-
-type InterpreterVal a = StateT InterpreterState (Either String) a
-type Interpreter = InterpreterVal Int
-
-data InterpreterState = InterpreterState 
-    { upperBound :: Int
-    , functionDictionary :: Map IxIdt IxFun
-    , cache :: Array (IxIdt, Int) (Maybe Int)
-    }
 
 cacheLookup :: IxIdt -> Int -> InterpreterVal (Maybe Int)
 cacheLookup fIdt x = do
@@ -84,9 +88,12 @@ interpret :: Map Idt Equation -> Map Idt [Int] -> Int -> Idt -> Int -> Either St
 interpret definitions predefineds magnificationBound f x = do
     n <- lookupN predefineds
     let uB = n * magnificationBound
-    (idtIndex, functionIndex) <- indexDictionary $ buildDictionary definitions predefineds
+    let dict = buildDictionary definitions predefineds
+    (idtIndex, functionIndex) <- indexDictionary uB dict 
     let maxIdtIdx = length $ Map.keys idtIndex
-    let emptyCache = Array.listArray ((IxIdt 0, 0), (IxIdt maxIdtIdx, uB)) (replicate (maxIdtIdx * uB) Nothing)
+    let lowerArrayBound = (IxIdt 0, 0)
+    let upperArrayBound = (IxIdt (maxIdtIdx - 1), uB - 1)
+    let emptyCache = Array.listArray (lowerArrayBound, upperArrayBound) $ replicate (maxIdtIdx * uB) Nothing
     let initialState = InterpreterState uB functionIndex emptyCache
     let ixF = idtIndex Map.! f
     StateT.evalStateT (evaluate ixF x) initialState
@@ -128,9 +135,9 @@ evaluate fIdt x = do
                     f <- case Map.lookup fIdt dictionary of
                         (Just f) -> return f
                         Nothing -> lift $ Left $ "Error: undefined function symbol " ++ show fIdt
-                    result <- evaluateUnsafe f x
-                    validOutput <- inBounds result
-                    let result = if validOutput then result else 0
+                    evaluationResult <- evaluateUnsafe f x
+                    validOutput <- inBounds evaluationResult
+                    let result = if validOutput then evaluationResult else 0
                     cacheWrite fIdt x result
                     return result
                 (Just result) -> return result
@@ -139,7 +146,7 @@ evaluate fIdt x = do
 evaluateUnsafe :: IxFun -> Int -> Interpreter
 evaluateUnsafe IxConstOne _ = return 1
 evaluateUnsafe IxIdentity x = return x
-evaluateUnsafe (IxPredefined vals) x = return $ vals !! x
+evaluateUnsafe (IxPredefined vals) x = return $ vals Array.! x
 evaluateUnsafe (IxOpFun op lhs rhs) x = do
     lhsResult <- evaluate lhs x
     rhsResult <- evaluate rhs x
