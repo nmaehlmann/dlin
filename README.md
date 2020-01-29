@@ -13,5 +13,10 @@ where
 
 and each f<sub>i</sub> is of one of the two follwing shapes:
 
-1. (Operation) f<sub>i</sub>(x) = g(x) + g'(x) //where g,g' are from F<sub>i-1</sub>
-2. (Recursion) f<sub>i</sub>(x) = g\[ep(h,x)\]x //where h is from F<sub>i-1</sub> and g is from F<sub>q</sub>
+- Operation: f<sub>i</sub>(x) = g(x) + g'(x) &nbsp;&nbsp; where g,g' are from F<sub>i-1</sub>
+- Recursion: f<sub>i</sub>(x) = g\[ep(h,x)\]x &nbsp;&nbsp;&nbsp; where h is from F<sub>i-1</sub> and g is from F<sub>any</sub>
+
+The recursion equations make use of two unconventional operators defined as follows:
+
+- Bounded Application: g\[x\]y = *if* x < y *then* g(x) *else* x
+- Equal Predecessor : ep(f,x) = max{ y | x < y *and* f(x) = f(y) } *if existing, otherwise* x
