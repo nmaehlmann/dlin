@@ -18,5 +18,5 @@ and each f<sub>i</sub> is of one of the two follwing shapes:
 
 The recursion equations make use of two unconventional operators defined as follows:
 
-- Bounded Application: g\[x\]y = *if* x < y *then* g(x) *else* x
-- Equal Predecessor: ep(f,x) = max{ y | x < y *and* f(x) = f(y) } *if existing, otherwise* x
+- Bounded Application: g\[x\]y = g(x) *if* x < y *otherwise* x
+- Equal Predecessor: ep(f,x) = max{ y | x < y *and* f(x) = f(y) } *if* y *exists otherwise* x
